@@ -117,53 +117,56 @@ classDiagram
 
 ```mermaid
 erDiagram
-  Payment {
-    Integer id
-    String name
+  Order {
+    String orderId
+    String businessId
+    String memberId
+    String orderNo
+    Jsonb fromPoint
+    Jsonb toPotin
+    Jsonb fromAddress
+    Jsonb toAddress
   }
-  Payment ||--|{ PaymentDetail : has
+  Order ||--|{ InvoiceOwner : has
 
-  PaymentMethod {
-    Integer id
-    String name
-  }
-
-  PaymentDetail {
-    Integer id
-    Integer paymentId
-    Integer paymentMethodId
-    Long productId
-    Integer amount
-    Integer quantity
-    Integer unitPrice
-    String productInfo
-  }
-  PaymentDetail ||--|{ PaymentMethod : fundingsource
-
-  Cancel {
-    Integer id
-    Integer paymentId
-    String transactionId
-  }
-  Cancel ||--|{ CancelDetail : has
-  CancelDetail ||--|{ PaymentMethod : fundingsource
-
-  CancelDetail {
-    Integer id
-    Integer cancelId
-    Integer amount
-    String productInfo
+  InvoiceOwner {
+    String invoiceOwnerId
+    String orderId
+    Integer totalAmount
+    Integer totalAmountWithoutVat
+    String invoiceStatus
+    String invoiceType
+    String billNo
+    String documentId
   }
 
-  PaymentDetail {
-    String paymentId
-    String paymentMethodId
+  InvoiceOwnerItem  {
+    String invoiceItemId
+    String invoiceOwnerId
+    String invoiceItemType
+    Integer invoiceItemAmount
   }
+  InvoiceOwner ||--|{ InvoiceOwnerItem : has
 
-  CancelDetail {
-    String cancelId
+  InvoiceDriver  {
+    String invoiceDriverId
+    String orderId
+    Integer totalAmount
+    Integer totalAmountWithoutVat
+    String invoiceStatus
+    String invoiceType
+    String billNo
+    String documentId
   }
+  Order ||--|{ InvoiceDriver : has
 
+  InvoiceDriverItem  {
+    String invoiceItemId
+    String invoiceDriverId
+    String invoiceItemType
+    Integer invoiceItemAmount
+  }
+  InvoiceDriver ||--|{ InvoiceDriverItem : has
 
 ```
 
@@ -189,160 +192,12 @@ flowchart TB
 ### class diagram
 
 -   class diagram
-
-```mermaid
-classDiagram
-
-    class PaymentMethod {
-        +String paymentMethodID
-        pay()
-        cancel()
-    }
-    PaymentMethod <|-- Card
-    PaymentMethod <|-- Bank
-
-    class PG {
-        +String pgID
-        pay()
-        cancel()
-    }
-    PG <|-- Card
-    PG <|-- Bank
-
-
-    class Payment {
-        +String paymentID
-        +String transactionID
-        void pay()
-    }
-
-    class Cancel {
-        +String cancelID
-        +PaymentID paymentID
-        +String transactionID
-        void cancel()
-    }
-
-    class CancelDetail {
-        +String cancelDetailID
-        +String cancelID
-    }
-
-    class PaymentDetail {
-        +PaymentID paymentID
-    }
-
-
-    class Card {
-        CardID
-        pay()
-        cancel()
-        checkTransaction()
-    }
-    note for Card "checkTransaction() : 결제내역확인"
-
-    class Bank {
-        BankID
-        pay()
-        cancel()
-        checkTransaction()
-    }
-    note for Bank "checkTransaction() : 결제내역확인"
-
-   Payment "1" -- "*" PaymentDetail : 결제수단, 금액, 상품 정보
-   Cancel "1" -- "*" CancelDetail : 결제수단, 금액, 상품 정보
-   Cancel "0..1" --> "1" Payment : 원결제 정보
-   Payment --> PaymentMethod : 결제요청
-   Cancel --> PaymentMethod : 취소요청
-
-
-   class PaymentTiemoutListner {
-        +beforeCancelForTimeout()
-        -checkLimitRetryCount()
-        -isPay()
-        +cancelForTimeout()
-        +postCancelForTimeout()
-   }
-
-   class timeoutResultNotification {
-        sendNotification()
-   }
-
-
-    PaymentTiemoutListner "1" -- "1" Payment : 원결제확인
-    Payment --> PaymentTiemoutListner : Timeout Event
-    PaymentTiemoutListner --> PaymentMethod : cancel 처리
-
-```
+-   기존에 있는 클래스를 이용하여 API를 만들기 때문에 영향을 받는 class는 따로 없습니다.
 
 ### ERD
 
 -   TO-BE 구조에서 변경되는 ERD를 작성한다.
-
-```mermaid
-erDiagram
-  Payment {
-    Integer id
-    String name
-  }
-  Payment ||--|{ PaymentDetail : has
-
-  PaymentMethod {
-    Integer id
-    String name
-  }
-
-  PaymentDetail {
-    Integer id
-    Integer paymentId
-    Integer paymentMethodId
-    Long productId
-    Integer amount
-    Integer quantity
-    Integer unitPrice
-    String productInfo
-  }
-  PaymentDetail ||--|{ PaymentMethod : fundingsource
-
-  Cancel {
-    Integer id
-    Integer paymentId
-    String transactionId
-  }
-  Cancel ||--|{ CancelDetail : has
-  CancelDetail ||--|{ PaymentMethod : fundingsource
-
-  CancelDetail {
-    Integer id
-    Integer cancelId
-    Integer amount
-    String productInfo
-  }
-
-  PaymentDetail {
-    String paymentId
-    String paymentMethodId
-  }
-
-  CancelDetail {
-    String cancelId
-  }
-
-  payTimeoutRetry {
-    String id
-    Integer retryCnt
-    String status
-  }
-
-  payTimeoutRetryHistories {
-    String id
-    String status
-  }
-
-payTimeoutRetry ||--o{ Retry-Process : do
-payTimeoutRetryHistories ||--o{ Retry-Process : dohistories
-
-```
+-   ERD는 변경사항 없습니다.
 
 ## Task List
 
