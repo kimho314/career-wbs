@@ -46,67 +46,58 @@ flowchart TB
 ```mermaid
 classDiagram
 
-    class PaymentMethod {
-        +String paymentMethodID
-        pay()
-        cancel()
-    }
-    PaymentMethod <|-- Card
-    PaymentMethod <|-- Bank
-
-    class PG {
-        +String pgID
-        pay()
-        cancel()
-    }
-    PG <|-- Card
-    PG <|-- Bank
+    class Order {
+        String orderId
+        String businessId
+        String memberId
+        String orderNo
+        Jsonb fromPoint
+        Jsonb toPotin
+        Jsonb fromAddress
+        Jsonb toAddress
+  }
 
 
-    class Payment {
-        +String paymentID
-        +String transactionID
-        void pay()
-    }
-
-    class Cancel {
-        +String cancelID
-        +PaymentID paymentID
-        +String transactionID
-        void cancel()
-    }
-
-    class CancelDetail {
-        +String cancelDetailID
-        +String cancelID
-    }
-
-    class PaymentDetail {
-        +PaymentID paymentID
-    }
+    class InvoiceOwner {
+        String invoiceOwnerId
+        String orderId
+        Integer totalAmount
+        Integer totalAmountWithoutVat
+        String invoiceStatus
+        String invoiceType
+        String billNo
+        String documentId
+  }
 
 
-    class Card {
-        CardID
-        pay()
-        cancel()
-        checkTransaction()
-    }
-    note for Card "checkTransaction() : 결제내역확인"
+    class InvoiceOwnerItem  {
+        String invoiceItemId
+        String invoiceOwnerId
+        String invoiceItemType
+        Integer invoiceItemAmount
+  }
 
-    class Bank {
-        BankID
-        pay()
-        cancel()
-        checkTransaction()
-    }
-    note for Bank "checkTransaction() : 결제내역확인"
+    class InvoiceDriver  {
+        String invoiceDriverId
+        String orderId
+        Integer totalAmount
+        Integer totalAmountWithoutVat
+        String invoiceStatus
+        String invoiceType
+        String billNo
+        String documentId
+  }
 
-   Payment "1" -- "*" PaymentDetail : 결제수단, 금액, 상품 정보
-   Cancel "1" -- "*" CancelDetail : 결제수단, 금액, 상품 정보
-   Cancel "0..1" --> "1" Payment : 원결제 정보
-   Payment --> PaymentMethod : 결제요청
-   Cancel --> PaymentMethod : 취소요청
+    class InvoiceDriverItem  {
+        String invoiceItemId
+        String invoiceDriverId
+        String invoiceItemType
+        Integer invoiceItemAmount
+  }
+  Order "1" -- "*" InvoiceOwner : 화주 결제 내역
+  Order "1" -- "*" InvoiceDriver : 차주 결제 내역
+  InvoiceOwner "1" -- "*" InvoiceOwnerItem : 화주 결제 상세 내역(결제 청구 항목 및 금액)
+  InvoiceDriver "1" -- "*" InvoiceDriverItem : 차주 결제 상세 내역(결제 청구 항목 및 금액)
 
 
 ```
@@ -201,58 +192,33 @@ flowchart TB
 
 ## Task List
 
-1. Timeout 발생 시 Event발생 수정- SQS, SNS <br>
-2. Timeout event subscription module 작성<br>
-3. Timeout log table 설계, 생성<br>
-4. Timeout 재처리 service 설개, 구현<br>
-   &nbsp; &nbsp; 1. transaction 성공여부 확인 <br>
-   &nbsp; &nbsp; 2. transaction 취소 처리 하기 (결제시)<br>
-   &nbsp; &nbsp; 3. 재처리 logging(DB) : 처리 횟수(3회), 처리 내역<br>
-5. Timeout 재처리 현황 조회 어드민 page.<br>
-6. Timeout 재처리 실패시 메일 발송 모듈.<br>
+1. 차주/화주 인임비 수정 API 개발 <br>
 
 ## WBS
 
--   산정 기준 : 4시간/일
+-   산정 기준 : 6시간/일
 
 1. 요구사항 분석 : 이미수행
-2. 설계 : 3d
-3. 일정산정: 1d
-4. Timeout 발생 시 Event발생 수정- SQS, SNS : 이미 사용하는 SQS가 있고 큐생성 및 기존코드 수정 : 2d
-5. Timeout event subscription module 작성 : SQS, SNS : 이미 사용하는 SQS가 있고 신규 class 생성 : 2d
-6. Timeout log table 설계, 생성 : 1d
-7. Timeout 재처리 service 설개, 구현 : 2d
-    1. transaction 성공여부 확인 : 0.5d
-    2. transaction 취소 처리 하기 (결제시) : 0.5d
-    3. 재처리 logging(DB) : 처리 횟수(3회), 처리 내역 : 1d
-8. Timeout 재처리 현황 조회 어드민 page.: 기존 admin에 메뉴 추가 : 5d
-9. Timeout 재처리 실패시 메일 발송 모듈: 기존 notification에 method 추가 : 1d
+2. 설계 : 1d
+3. 화주/차주 운임비 수정 API 개발 : 1d
 
 ```mermaid
 gantt
     dateFormat  YYYY-MM-DD
-    title       결제 재처리 WBS
-    excludes    weekends, 2023-12-25, 2024-01-01
+    title       운임비 수정 API WBS
+    excludes    weekends
     %% (`excludes` accepts specific dates in YYYY-MM-DD format, days of the week ("sunday") or "weekends", but not the word "weekdays".)
 
     section prepare
-    요구사항분석                    :done,    des1, 2023-12-01, 10d
-    설계                            :active,  des2, 2023-12-11, 3d
-    일정산정                        :         des3, after des2, 1d
-    Timeout log table 설계, 생성    :       des4, 2023-12-27, 1d
+    요구사항분석                     :done,  des1, 2024-05-16, 3d
+    설계                            :done,  des2, 2024-05-21, 1d
+
 
     section 기존 모듈 수정
-    Payment timeout event 발생          :crit, b1, 2024-01-03,2d
-    Cancel timeout용 cancel 추가        :crit, b2, 2024-01-10, 2d
-
-    section 신규 모듈 구현
-    Timeout event consumer 모듈작성    :c1, after b1, 2d
-    Queue 동작확인                      :milestone, after c1, 0d
-    Timeout service 구현                  :c2, after b2  , 2d
-    Timeout 재처리 현황 조회 어드민 개발    :c3, after c2  , 5d
-    Timeout 재처리 실패시 notification     : c4, after c3, 1d
+    화주/차주 운임비 수정 API 개발    :crit   c1 , 2024-05-22, 1d
+    화주/차주 운임비 수정 API 동작확인     :milestone,2024-05-23, 0d
 
     section 테스트
-    Test & QA                           :after c4, 2d
+    Test & QA                        :2024-05-23, 2d
 
 ```
